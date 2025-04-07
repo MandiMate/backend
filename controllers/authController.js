@@ -20,7 +20,7 @@ const Fetch_All = async (req, res) => {
 // Create User
 const register = async (req, res) => {
     try {
-        let { userName, email, password, role } = req.body
+        let { userName, email, password} = req.body
 
         const userExist = await authentication.findOne({ email })
 
@@ -34,11 +34,11 @@ const register = async (req, res) => {
             userName,
             email,
             password: hashedPassword,
-            role
         })
 
         res.status(201).send({ status: 201, message: "User Registered Successfully", newUser })
     } catch (error) {
+        console.log("Register Error:", error)
         res.status(500).send({ message: "Internal Server Error" })
     }
 }
@@ -57,13 +57,14 @@ const login = async (req, res) => {
         const validatePass = await bcrypt.compare(password, user?.password)
 
         if (!validatePass) {
-            res.status(400).send({ message: "Invalid Credentials" })
+            return res.status(400).send({ message: "Invalid Credentials" })
         }
 
         const token = jwt.sign({ id: user?._id }, process.env.JWT_TOKEN)
-        res.status(200).send({ status: 200, message: "Login Successfully", token, user: { _id: user?._id, userName: user?.userName, email: user?.email, role: user?.role } })
+        res.status(200).send({ status: 200, message: "Login Successfully", token, user: { _id: user?._id, userName: user?.userName, email: user?.email} })
 
     } catch (error) {
+        console.log("Login Error:", error)
         res.status(500).send({ message: "Internal Server Error" })
     }
 }
