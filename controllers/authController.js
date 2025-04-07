@@ -20,7 +20,9 @@ const Fetch_All = async (req, res) => {
 // Create User
 const register = async (req, res) => {
     try {
-        let { userName, email, password} = req.body
+
+        let { userName, email, password } = req.body
+
 
         const userExist = await authentication.findOne({ email })
 

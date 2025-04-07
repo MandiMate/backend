@@ -9,7 +9,6 @@ dotenv.config()
 app.use(express.json())
 app.use(cors())
 
-
 app.use("/auth", authRoute)
 
 const PORT = process.env.PORT || 7010
