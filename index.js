@@ -4,7 +4,7 @@ import mongoose from "mongoose"
 import authRoute from "./routers/authRoute.js"
 import cors from "cors"
 import seasonRoute from "./routers/seasonRoute.js"
-import autoCloseSeason from "./cronJobs/seasonAutoClose.js"
+import autoCloseSeason from "./cronJobs/SeasonAutoClose.js"
 
 const app = express()
 dotenv.config()

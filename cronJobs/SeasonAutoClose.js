@@ -6,7 +6,6 @@ const autoCloseSeason = () => {
     cron.schedule("0 0 * * *", async () => {
         try {
             const now = new Date();
-            console.log(now);
             
             const expiredSeasons = await Season.find({
                 isActive: true,
