@@ -7,7 +7,7 @@ const createSeason = async (req, res) => {
         const { name, startDate, endDate } = req.body;
 
         // Check if any season is already active
-        const activeSeason = await Season.findOne({ isActive: true });
+        const activeSeason = await Season.findOne({ isActive: true, agentId: req.user._id });
         if (activeSeason) {
             return res.status(400).send({ message: "Another season is already active!" });
         }
@@ -17,7 +17,7 @@ const createSeason = async (req, res) => {
             startDate,
             endDate,
             isActive: true,
-            agentId: new mongoose.Types.ObjectId(),
+            agentId: req.user._id,
         });
 
         res.status(201).send({ status: 201, message: "Season started successfully", data: newSeason });
@@ -29,7 +29,7 @@ const createSeason = async (req, res) => {
 // Close Active Season
 const closeSeason = async (req, res) => {
     try {
-        const activeSeason = await Season.findOne({ isActive: true });
+        const activeSeason = await Season.findOne({ isActive: true, agentId: req.user._id });
 
         if (!activeSeason) {
             return res.status(400).send({ message: "No active season found" });
@@ -47,7 +47,7 @@ const closeSeason = async (req, res) => {
 // Get All Seasons
 const getAllSeasons = async (req, res) => {
     try {
-        const seasons = await Season.find().sort({ createdAt: -1 });
+        const seasons = await Season.find({ agentId: req.user._id }).sort({ createdAt: -1 });
         res.status(200).send({ status: 200, message: "Seasons fetched successfully", data: seasons });
     } catch (error) {
         res.status(500).send({ message: "Server Error", error });
@@ -57,7 +57,7 @@ const getAllSeasons = async (req, res) => {
 // Get Active Season Only
 const getActiveSeason = async (req, res) => {
     try {
-        const activeSeason = await Season.findOne({ isActive: true });
+        const activeSeason = await Season.findOne({ isActive: true, agentId: req.user._id });
         if (!activeSeason) {
             return res.status(404).send({ message: "No active season found" });
         }

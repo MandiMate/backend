@@ -53,7 +53,7 @@ const login = async (req, res) => {
         const user = await authentication.findOne({ email })
 
         if (!user) {
-            return res.status(400).send({ message: "Invalid Credentials" })
+            return res.status(400).send({ message: "No Account Found. Please Create Your Account First." })
         }
 
         const validatePass = await bcrypt.compare(password, user?.password)

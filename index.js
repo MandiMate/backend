@@ -4,6 +4,7 @@ import mongoose from "mongoose"
 import authRoute from "./routers/authRoute.js"
 import cors from "cors"
 import seasonRoute from "./routers/seasonRoute.js"
+import autoCloseSeason from "./cronJobs/seasonAutoClose.js"
 
 const app = express()
 dotenv.config()
@@ -15,6 +16,9 @@ app.use("/season", seasonRoute);
 
 const PORT = process.env.PORT || 7010
 const MONGODB = process.env.MONGODBURI
+
+// Start the cron job when the server starts
+autoCloseSeason()
 
 mongoose.connect(MONGODB)
     .then(() => {
