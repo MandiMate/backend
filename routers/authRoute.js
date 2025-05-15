@@ -1,19 +1,21 @@
 import express from "express";
-import { Fetch_All, login, register, userDelete } from "../controllers/authController.js";
+import { fetchAllUsers, login, register, deleteUser, createAdmin } from "../controllers/authController.js";
 
-const authRoute = express.Router()
+const authRoute = express.Router();
 
-// Fetch All Users Data
-authRoute.get("/", Fetch_All)
+// Fetch All Users
+authRoute.get("/", fetchAllUsers);
 
-// SignUp
-authRoute.post("/register", register)
+// Register Agent or Landlord
+authRoute.post("/register", register);
 
 // Login
-authRoute.post("/signin", login)
+authRoute.post("/signin", login);
 
 // Delete User
-authRoute.delete("/userDelete/:id", userDelete)
+authRoute.delete("/userDelete/:id", deleteUser);
 
+// Create Admin (ONLY backend use)
+authRoute.post("/createAdmin", createAdmin);
 
-export default authRoute
+export default authRoute;

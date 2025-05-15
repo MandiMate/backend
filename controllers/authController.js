@@ -1,87 +1,131 @@
-import authentication from "../models/authModel.js"
-import bcrypt from "bcrypt"
-import jwt from "jsonwebtoken"
-import dotenv from "dotenv"
+import authentication from "../models/authModel.js";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
 
-dotenv.config()
+dotenv.config();
 
-// Fetch All Signin Users
-const Fetch_All = async (req, res) => {
+// Fetch All Users
+const fetchAllUsers = async (req, res) => {
     try {
-        let fetchData = await authentication.find()
-
-        res.status(200).send({ status: 200, message: "Success", data: fetchData })
-
+        const users = await authentication.find();
+        res.status(200).send({ status: 200, message: "Success", data: users });
     } catch (error) {
-        res.status(400).send({ status: 400, message: "Data Not Found" })
+        console.log("Fetch Error:", error);
+        res.status(400).send({ status: 400, message: "Data Not Found" });
     }
-}
+};
 
-// Create User
+// Register New User (Agent or Landlord)
 const register = async (req, res) => {
     try {
+        const { userName, email, password, role } = req.body;
+        
+        const existingUser = await authentication.findOne({ email });
 
-        let { userName, email, password } = req.body
-
-
-        const userExist = await authentication.findOne({ email })
-
-        if (userExist) {
-            return res.status(400).send({ message: "User Already Exist" })
+        if (existingUser) {
+            return res.status(400).send({ message: "User Already Exists" });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10)
+        const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = await authentication.create({
             userName,
             email,
             password: hashedPassword,
-        })
+            role
+        });
 
-        res.status(201).send({ status: 201, message: "User Registered Successfully", newUser })
+        res.status(201).send({ status: 201, message: "User Registered Successfully", newUser });
     } catch (error) {
-        console.log("Register Error:", error)
-        res.status(500).send({ message: "Internal Server Error" })
+        console.log("Register Error:", error);
+        res.status(500).send({ message: "Internal Server Error" });
     }
-}
+};
 
 // Login User
 const login = async (req, res) => {
     try {
-        let { email, password } = req.body
+        const { email, password } = req.body;
 
-        const user = await authentication.findOne({ email })
+        const user = await authentication.findOne({ email });
 
         if (!user) {
-            return res.status(400).send({ message: "No Account Found. Please Create Your Account First." })
+            return res.status(400).send({ message: "No Account Found. Please Create an Account First." });
         }
 
-        const validatePass = await bcrypt.compare(password, user?.password)
+        const isPasswordValid = await bcrypt.compare(password, user.password);
 
-        if (!validatePass) {
-            return res.status(400).send({ message: "Invalid Credentials" })
+        if (!isPasswordValid) {
+            return res.status(400).send({ message: "Invalid Password" });
         }
 
-        const token = jwt.sign({ id: user?._id }, process.env.JWT_TOKEN)
-        res.status(200).send({ status: 200, message: "Login Successfully", token, user: { _id: user?._id, userName: user?.userName, email: user?.email} })
+        const token = jwt.sign(
+            { id: user._id, role: user.role },
+            process.env.JWT_TOKEN,
+        );
+
+        res.status(200).send({
+            status: 200,
+            message: "Login Successfully",
+            token,
+            user: {
+                _id: user._id,
+                userName: user.userName,
+                email: user.email,
+                role: user.role
+            }
+        });
 
     } catch (error) {
-        console.log("Login Error:", error)
-        res.status(500).send({ message: "Internal Server Error" })
+        console.log("Login Error:", error);
+        res.status(500).send({ message: "Internal Server Error" });
     }
-}
+};
 
-// Delete Signip User
-const userDelete = async (req, res) => {
+// Delete User (by ID)
+const deleteUser = async (req, res) => {
     try {
-        let { id } = req.params
+        const { id } = req.params;
 
-        let deleteUser = await authentication.findByIdAndDelete(id)
+        const deletedUser = await authentication.findByIdAndDelete(id);
 
-        res.status(200).send({ status: 200, message: "Deleted Successfully", data: deleteUser })
+        if (!deletedUser) {
+            return res.status(404).send({ message: "User Not Found" });
+        }
+
+        res.status(200).send({ status: 200, message: "User Deleted Successfully", data: deletedUser });
     } catch (error) {
-        res.status(400).send({ status: 400, message: "Something Went Wrong" })
+        console.log("Delete Error:", error);
+        res.status(400).send({ status: 400, message: "Something Went Wrong" });
     }
-}
+};
 
-export { Fetch_All, register, login, userDelete }
+// Admin Create (Manual only by DB directly)
+const createAdmin = async (req, res) => {
+    try {
+        const { userName, email, password } = req.body;
+
+        const existingAdmin = await authentication.findOne({ email });
+
+        if (existingAdmin) {
+            return res.status(400).send({ message: "Admin Already Exists" });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const newAdmin = await authentication.create({
+            userName,
+            email,
+            password: hashedPassword,
+            role: 1 // Fixed role for Admin
+        });
+
+        res.status(201).send({ status: 201, message: "Admin Created Successfully", newAdmin });
+    } catch (error) {
+        console.log("Create Admin Error:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+    }
+};
+
+export { fetchAllUsers, register, login, deleteUser, createAdmin };
