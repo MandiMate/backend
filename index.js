@@ -4,6 +4,10 @@ import mongoose from "mongoose";
 import cors from "cors";
 import authRoute from "./routers/authRoute.js";
 import seasonRouter from "./routers/seasonRoute.js";
+import landlordRoute from "./routers/landlordRoute.js";
+import farmerRoute from "./routers/farmerRoute.js";
+import purchaseRouter from "./routers/purchaseRoute.js";
+import sumamaryRoute from "./routers/summaryRoute.js";
 
 const app = express();
 dotenv.config();
@@ -13,6 +17,10 @@ app.use(cors());
 
 app.use("/auth", authRoute);
 app.use("/season", seasonRouter);
+app.use("/landlord", landlordRoute);
+app.use("/farmer", farmerRoute);
+app.use("/purchase", purchaseRouter);
+app.use("/summary", sumamaryRoute);
 
 const PORT = process.env.PORT || 7010;
 const MONGODB = process.env.MONGODBURI;
