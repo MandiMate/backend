@@ -28,6 +28,19 @@ export const createFarmer = async (req, res) => {
     }
 };
 
+// Get All Farmers for Logged-in Agent
+export const getFarmers = async (req, res) => {
+    try {
+        const agentId = req.user.id; // middleware se aa raha hai
+        const farmers = await Farmer.find({ agentId, isActive: true }).sort({ createdAt: -1 });
+
+        res.status(200).json({ data: farmers });
+    } catch (error) {
+        console.error("Get Farmers Error:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
 // Get Farmers by Landlord
 export const getFarmersByLandlord = async (req, res) => {
     try {
