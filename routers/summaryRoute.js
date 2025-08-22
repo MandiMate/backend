@@ -5,6 +5,7 @@ import authMiddleware from "../middlewares/authMiddleware.js";
 
 const sumamaryRoute = express.Router();
 
+// Summary Routes
 sumamaryRoute.get("/season-summary/:seasonId", authMiddleware, getSeasonSummary);
 sumamaryRoute.get("/season/:seasonId/landlord/:landlordId", authMiddleware, getLandlordDetailSummary);
 sumamaryRoute.get("/season/:seasonId/farmer/:farmerId", authMiddleware, getFarmerPurchaseHistory);

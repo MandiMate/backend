@@ -10,6 +10,7 @@ import authMiddleware from "../middlewares/authMiddleware.js";
 
 const purchaseRouter = express.Router();
 
+// Purchase Routes
 // Add new purchase
 purchaseRouter.post("/add", authMiddleware, addPurchase);
 

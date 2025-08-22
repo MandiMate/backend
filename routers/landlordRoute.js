@@ -4,6 +4,7 @@ import authMiddleware from "../middlewares/authMiddleware.js";
 
 const landlordRoute = express.Router();
 
+// Landlord Routes
 landlordRoute.post("/create", authMiddleware, createLandlord);
 landlordRoute.get("/", authMiddleware, getLandlords);
 landlordRoute.patch("/update/:id", authMiddleware, updateLandlord);

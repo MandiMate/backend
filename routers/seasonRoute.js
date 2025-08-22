@@ -4,7 +4,7 @@ import authMiddleware from "../middlewares/authMiddleware.js";
 
 const seasonRouter = express.Router();
 
-// Protected routes
+// Season routes
 seasonRouter.post("/start", authMiddleware, startSeason);
 seasonRouter.get("/active", authMiddleware, getActiveSeason);
 seasonRouter.patch("/close/:id", authMiddleware, closeSeason);
