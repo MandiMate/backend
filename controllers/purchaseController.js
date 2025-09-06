@@ -1,5 +1,7 @@
 import Purchase from "../models/purchaseModel.js";
 import Season from "../models/seasonModel.js";
+import { increaseStock, decreaseStock } from "../services/inventoryService.js";
+import * as inventoryService from "../services/inventoryService.js";
 
 // 1. Add a new purchase
 export const addPurchase = async (req, res) => {
@@ -42,6 +44,19 @@ export const addPurchase = async (req, res) => {
             purchaseDate
         });
 
+        // try updating inventory but don't fail the purchase if inventory update errors
+        try {
+            await increaseStock({ agentId, seasonId, productName, qty: quantity, unit });
+        } catch (invErr) {
+            console.error("Inventory update warning:", invErr);
+            // return success but include warning
+            return res.status(201).json({
+                message: "Purchase added successfully (inventory update warning)",
+                data: newPurchase,
+                warning: invErr.message
+            });
+
+        }
         res.status(201).json({
             message: "Purchase added successfully",
             data: newPurchase
@@ -105,20 +120,68 @@ export const updatePurchase = async (req, res) => {
     try {
         const { id } = req.params;
 
-        let purchase = await Purchase.findById(id);
-        if (!purchase) {
+        let oldPurchase = await Purchase.findById(id);
+        if (!oldPurchase) {
             return res.status(404).json({ message: "Purchase not found" });
         }
 
+        // Purani values store kar lo inventory adjust ke liye
+        const oldProduct = oldPurchase.productName;
+        const oldQty = oldPurchase.quantity;
+        const oldUnit = oldPurchase.unit;
+
         // Update fields manually
-        Object.assign(purchase, req.body);
+        Object.assign(oldPurchase, req.body);
 
         // Save triggers pre("validate") middleware
-        await purchase.save();
+        const updatedPurchase = await oldPurchase.save();
+
+        // Inventory Adjust Logic
+        if (oldProduct === updatedPurchase.productName && oldUnit === updatedPurchase.unit) {
+            // 👉 same product & same unit → sirf quantity difference handle karo
+            const diff = updatedPurchase.quantity - oldQty;
+            if (diff > 0) {
+                await inventoryService.increaseStock({
+                    seasonId: updatedPurchase.seasonId,
+                    agentId: updatedPurchase.agentId,
+                    productName: updatedPurchase.productName,
+                    unit: updatedPurchase.unit,
+                    qty: diff
+                });
+            } else if (diff < 0) {
+                // rollback extra purchase
+                await inventoryService.removePurchaseStock({
+                    seasonId: updatedPurchase.seasonId,
+                    agentId: updatedPurchase.agentId,
+                    productName: updatedPurchase.productName,
+                    unit: updatedPurchase.unit,
+                    qty: Math.abs(diff)
+                });
+            }
+        } else {
+            // 👉 product ya unit change ho gaya
+            // 1. purani quantity ko purane product se rollback karo
+            await inventoryService.removePurchaseStock({
+                seasonId: oldPurchase.seasonId,
+                agentId: oldPurchase.agentId,
+                productName: oldProduct,
+                unit: oldUnit,
+                qty: oldQty
+            });
+
+            // 2. nayi quantity ko naye product me add karo
+            await inventoryService.increaseStock({
+                seasonId: updatedPurchase.seasonId,
+                agentId: updatedPurchase.agentId,
+                productName: updatedPurchase.productName,
+                unit: updatedPurchase.unit,
+                qty: updatedPurchase.quantity
+            });
+        }
 
         res.status(200).json({
             message: "Purchase updated successfully",
-            data: purchase
+            data: updatedPurchase
         });
 
     } catch (error) {
@@ -137,6 +200,15 @@ export const deletePurchase = async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ message: "Purchase not found" });
         }
+
+        // Inventory se quantity rollback karna zaroori hai (purchase remove case)
+        await inventoryService.removePurchaseStock({
+            seasonId: deleted.seasonId,
+            agentId: deleted.agentId,
+            productName: deleted.productName,
+            unit: deleted.unit,
+            qty: deleted.quantity
+        });
 
         res.status(200).json({
             message: "Purchase deleted successfully",

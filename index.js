@@ -8,6 +8,8 @@ import landlordRoute from "./routers/landlordRoute.js";
 import farmerRoute from "./routers/farmerRoute.js";
 import purchaseRouter from "./routers/purchaseRoute.js";
 import sumamaryRoute from "./routers/summaryRoute.js";
+import inventoryRouter from "./routers/inventoryRoute.js";
+import salesRouter from "./routers/saleRoute.js";
 
 const app = express();
 dotenv.config();
@@ -21,6 +23,8 @@ app.use("/landlord", landlordRoute);
 app.use("/farmer", farmerRoute);
 app.use("/purchase", purchaseRouter);
 app.use("/summary", sumamaryRoute);
+app.use("/inventory", inventoryRouter);
+app.use("/sale", salesRouter);
 
 const PORT = process.env.PORT || 7010;
 const MONGODB = process.env.MONGODBURI;
