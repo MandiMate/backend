@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Purchase from "../models/purchaseModel.js";
+import Sale from "../models/saleModel.js";
 
 // Get Season Summary Landlord Wise
 export const getSeasonSummary = async (req, res) => {
@@ -48,11 +49,31 @@ export const getSeasonSummary = async (req, res) => {
             }
         ]);
 
+        // 2. Sales aggregate (season + agent wise)
+        const salesSummary = await Sale.aggregate([
+            {
+                $match: {
+                    seasonId: new mongoose.Types.ObjectId(seasonId),
+                    agentId: new mongoose.Types.ObjectId(agentId),
+                },
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalSales: { $sum: "$totalAmount" },
+                },
+            },
+        ]);
+
+        const totalSales = salesSummary.length > 0 ? salesSummary[0].totalSales : 0;
+
+
         // Totals for summary cards
         const totals = {
             totalPurchases: summary.reduce((sum, item) => sum + item.totalPurchases, 0),
             totalPaid: summary.reduce((sum, item) => sum + item.totalPaid, 0),
             totalPending: summary.reduce((sum, item) => sum + item.pendingBalance, 0),
+            totalSales,
         };
 
         res.status(200).json({
@@ -153,7 +174,7 @@ export const getFarmerPurchaseHistory = async (req, res) => {
             landlordName: purchases[0].landlordId?.name || "",
             landlordContact: purchases[0].landlordId?.contact || ""
         };
-        
+
         res.status(200).json({
             message: "Farmer purchase history fetched successfully",
             farmerInfo,
