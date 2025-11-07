@@ -10,6 +10,7 @@ import purchaseRouter from "./routers/purchaseRoute.js";
 import sumamaryRoute from "./routers/summaryRoute.js";
 import inventoryRouter from "./routers/inventoryRoute.js";
 import salesRouter from "./routers/saleRoute.js";
+import seasonReportRouter from "./routers/seasonReportRoute.js";
 
 const app = express();
 dotenv.config();
@@ -25,6 +26,7 @@ app.use("/purchase", purchaseRouter);
 app.use("/summary", sumamaryRoute);
 app.use("/inventory", inventoryRouter);
 app.use("/sale", salesRouter);
+app.use("/seasonReport", seasonReportRouter);
 
 const PORT = process.env.PORT || 7010;
 const MONGODB = process.env.MONGODBURI;
