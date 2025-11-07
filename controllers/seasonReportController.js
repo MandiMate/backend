@@ -13,7 +13,7 @@ export const generateSeasonReport = async (req, res) => {
         const season = await Season.findOne({ _id: seasonId, agentId });
         if (!season) return res.status(404).json({ message: "Season not found" });
 
-        // Prevent duplicate report
+        // // Prevent duplicate report
         const existingReport = await SeasonReport.findOne({ seasonId, agentId });
         if (existingReport) {
             return res.status(400).json({
@@ -83,7 +83,6 @@ export const generateSeasonReport = async (req, res) => {
         // Total Profit/Loss
         const totalProfitOrLoss = productWiseSummary.reduce((sum, p) => sum + p.profitOrLoss, 0);
 
-        // Save report
         const report = await SeasonReport.create({
             seasonId,
             agentId,
@@ -94,14 +93,17 @@ export const generateSeasonReport = async (req, res) => {
             totalExpense,
             totalAdvance,
             totalPaidToFarmer,
-            totalProfitOrLoss,
             productWiseSummary
         });
 
+        // Populate seasonName
+        const populatedReport = await report.populate("seasonId", "name startDate endDate");
+
         res.status(201).json({
             message: "Season report generated successfully",
-            data: report
+            data: populatedReport
         });
+
 
     } catch (error) {
         console.error("Generate Season Report Error:", error);
@@ -110,23 +112,46 @@ export const generateSeasonReport = async (req, res) => {
 };
 
 
-// Get all reports (for admin or agent)
+// Get all reports (for admin or agent) with season name
 export const getAllSeasonReports = async (req, res) => {
     try {
         const agentId = req.user.id;
         const reports = await SeasonReport.find({ agentId })
-            .populate("seasonId", "seasonName startDate endDate")
+            .populate("seasonId", "name startDate endDate") // seasonName included
             .sort({ createdAt: -1 });
+
+        const cleanReports = reports.map(report => ({
+            _id: report._id,
+            seasonId: report.seasonId,
+            agentId: report.agentId,
+            totalPurchases: report.totalPurchases,
+            totalPurchaseAmount: report.totalPurchaseAmount,
+            totalSales: report.totalSales,
+            totalSalesAmount: report.totalSalesAmount,
+            totalExpense: report.totalExpense,
+            totalAdvance: report.totalAdvance,
+            totalPaidToFarmer: report.totalPaidToFarmer,
+            productWiseSummary: report.productWiseSummary.map(p => ({
+                productName: p.productName,
+                totalPurchasedQty: p.totalPurchasedQty,
+                totalPurchasedAmount: p.totalPurchasedAmount,
+                totalSoldQty: p.totalSoldQty,
+                totalSoldAmount: p.totalSoldAmount,
+                remainingQty: p.remainingQty
+            })),
+            generatedAt: report.generatedAt
+        }));
 
         res.status(200).json({
             message: "All season reports fetched",
-            data: reports
+            data: cleanReports
         });
     } catch (error) {
         console.error("Get Reports Error:", error);
         res.status(500).json({ message: "Internal Server Error" });
     }
 };
+
 
 // Get single report by ID with season name (profit/loss removed)
 export const getSeasonReportById = async (req, res) => {
